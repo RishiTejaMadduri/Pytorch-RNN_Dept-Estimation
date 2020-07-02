@@ -9,7 +9,7 @@ import sys
 import pickle
 import argparse
 from multiprocessing import Pool
-from kitti_utils import*
+from kitti_utils_1 import*
 
 
 # In[1]:
@@ -44,7 +44,7 @@ def main(args):
 
     created_groups=create_samples_from_sequence_kitti(outfile, kitti_path, depth_path, seq_name)
         
-    print('created')
+    print('created : ', created_groups)
     
     return 0
 

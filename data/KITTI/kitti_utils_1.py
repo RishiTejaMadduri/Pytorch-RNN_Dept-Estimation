@@ -194,6 +194,10 @@ def create_samples_from_sequence_kitti(output_dir, kitti_path, depth_path,seq_na
     #A tuple to store information for each view
     View_kitti = namedtuple('View', {'P', 'K', 'image', 'depth'})
     example={}
+    concat_view_list=[]
+    concat_depth_list=[]
+    concat_motion_list=[]
+    intrinsics_list=[]
     intrinsics_ori = dataset.calib.K_cam3
     dataset.calib.P_rect_30[0,3] *= 0#(resizedwidth / 1600)
     dataset.calib.P_rect_30[1,3] *= 0#(resizedheight / 375)
@@ -291,21 +295,20 @@ def create_samples_from_sequence_kitti(output_dir, kitti_path, depth_path,seq_na
             #print(len(concat_depth.tostring()))
             #print(len(concat_motion.tostring()))
             #print(len(intrinsics.tostring()))
-
             
-            example['image_seq'].append(concat_view)
-            example['depth_seq'].append(concat_depth)
-            example['motion_seq'].append(concat_motion)
-            example['intrinsics'].append(intrinsics)
+            concat_view_list.append(concat_view)
+            concat_depth_list.append(concat_depth)
+            concat_motion_list.append(concat_motion)
+            intrinsics_list.append(intrinsics)
             #print(ele_list[0].size)
 #             print(len(keys))  
             #example=dict(zip(keys,ele_list))
-            filename='cam3_'+ seq_name + ".pickle"
+            #filename='cam3_'+ seq_name + ".pickle"
 
-            with open(filename,'wb') as f:
-                pickle.dump(example,f)
-            counter+=1
-            print("Counter : ", counter)
+            #with open(filename,'wb') as f:
+                #pickle.dump(example,f)
+            #counter+=1
+            #print("Counter : ", counter)
             #with h5.File('cam3_'+seq_name+'.h5','w') as f:
                 #dset_img_seq=f.create_dataset("image_seq",data=np.string_(concat_view) )
                 #dset_dep_seq=f.create_dataset("depth_seq",data=np.string_(concat_depth) )
@@ -313,7 +316,14 @@ def create_samples_from_sequence_kitti(output_dir, kitti_path, depth_path,seq_na
                 #dset_intr_seq=f.create_dataset("intrinsics",data=np.string_(intrinsics.tostring))
 
             generated_groups+=1
-
+    example['image_seq']=concat_view_list
+    example['depth_seq']=concat_depth_list
+    example['motion_seq']=concat_motion_list
+    example['intrinsics']=intrinsics_list
+    print('len(example[image_seq]) : ', len(example['image_seq']))
+    filename="cam3_"+ seq_name + ".pickle"
+    with open(filename,'wb') as f:
+            pickle.dump(example, f)
     print(np.mean(mean_baseline))
     return generated_groups
 
