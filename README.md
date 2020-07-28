@@ -1,1 +1,37 @@
-# Pytorch-RNN_Dept-Estimation
+# Monocular Visual Odometry and Depth Estimation using RNN
+
+Pytorch based implementation of the paper: https://arxiv.org/abs/1904.07087
+By: Rui Wang, Stephen M. Pizer, Jan-Michael Frahm
+
+Note:
+'''
+ This work is still in progress. Will be updated very soon.
+'''
+
+Code Developed on:
+'''
+ Python 3.7
+ Pytorch 1.4
+ Cuda 10.2
+ Ubuntu 18.04 
+'''
+
+Requirements:
+
+'''
+ pip install -r requirements.txt
+'''
+
+Data Pre-Processing:
+'''
+ Download the Kitti raw and depth data and use the scripts in the data folder 
+'''
+
+TO-DO:
+
+'''
+ [ ] Clean Up the code
+ [ ] Add validation code
+ [ ] Train the model
+ [ ] Upload results
+'''
