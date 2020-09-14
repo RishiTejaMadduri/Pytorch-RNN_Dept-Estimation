@@ -35,7 +35,7 @@ By: Rui Wang, Stephen M. Pizer, Jan-Michael Frahm
  [ ] Upload results
 ```
 
-##Cite
+## Cite
 ```
 @inproceedings{wang2019recurrent,
   title={Recurrent Neural Network for (Un-) supervised Learning of Monocular Video Visual Odometry and Depth},

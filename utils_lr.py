@@ -66,46 +66,104 @@ def image_gradient_direction(img):
     return direction
 
 
+# In[3]:
+
+
+#Original-Rewritten
+def euler2mat(z,y,x):
+    """Converts euler angles to rotation matrix
+       TODO: remove the dimension for 'N' (deprecated for converting all source
+             poses altogether)
+       Reference: https://github.com/pulkitag/pycaffe-utils/blob/master/rot_utils.py#L174
+      Args:
+          z: rotation angle along z axis (in radians) -- size = [B, N]
+          y: rotation angle along y axis (in radians) -- size = [B, N]
+          x: rotation angle along x axis (in radians) -- size = [B, N]
+      Returns:
+          Rotation matrix corresponding to the euler angles -- size = [B, N, 3, 3]
+      """
+    
+    B = z.size(0)
+    N = 1
+    z = torch.unsqueeze(torch.unsqueeze(z,-1), -1)
+    y = torch.unsqueeze(torch.unsqueeze(y,-1), -1)
+    x = torch.unsqueeze(torch.unsqueeze(x,-1), -1)
+    
+    zeros = torch.zeros((B,N,1,1))
+    ones = torch.ones((B,N,1,1))
+    
+    cosz = torch.cos(z)
+    sinz = torch.sin(z)
+    
+    rotz_1 = torch.cat([cosz, -sinz, zeros], axis=3)
+    rotz_2 = torch.cat([cosz, -sinz, zeros], axis=3)
+    rotz_3 = torch.cat([cosz, -sinz, zeros], axis=3)
+    zmat =  torch.cat([rotz_1, rotz_2, rotz_3], axis=2)
+    
+    cosy = torch.cos(y)
+    siny = torch.sin(y)
+    
+    roty_1 = torch.cat([cosy, zeros, siny], axis=3)
+    roty_2 = torch.cat([zeros, ones, zeros], axis=3)
+    roty_3 = torch.cat([-siny,zeros, cosy], axis=3)
+    ymat = torch.cat([roty_1, roty_2, roty_3], axis=2)
+    
+    cosx = torch.cos(x)
+    sinx = torch.sin(x)
+    
+    rotx_1 = torch.cat([ones, zeros, zeros], axis=3)
+    rotx_2 = torch.cat([zeros, cosx, -sinx], axis=3)
+    rotx_3 = torch.cat([zeros, sinx, cosx], axis=3)
+    xmat = torch.cat([rotx_1, rotx_2, rotx_3], axis=2) 
+    
+    
+    rotMat = torch.mat(torch.mat(xmat, ymat), zmat)
+    
+    return rotmat
+
+    
+
+
 # In[33]:
 
 
-#SFM Learner-Change accordingly
-def euler2mat(angle):
-    """Convert euler angles to rotation matrix.
-     Reference: https://github.com/pulkitag/pycaffe-utils/blob/master/rot_utils.py#L174
-    Args:
-        angle: rotation angle along 3 axis (in radians) -- size = [B, 3]
-    Returns:
-        Rotation matrix corresponding to the euler angles -- size = [B, 3, 3]    
-    """
-    B = angle.size(0)
-    x, y, z = angle[:,0], angle[:,1], angle[:,2]
+# #SFM Learner-Change accordingly
+# def euler2mat(angle):
+#     """Convert euler angles to rotation matrix.
+#      Reference: https://github.com/pulkitag/pycaffe-utils/blob/master/rot_utils.py#L174
+#     Args:
+#         angle: rotation angle along 3 axis (in radians) -- size = [B, 3]
+#     Returns:
+#         Rotation matrix corresponding to the euler angles -- size = [B, 3, 3]    
+#     """
+#     B = angle.size(0)
+#     x, y, z = angle[:,0], angle[:,1], angle[:,2]
 
-    cosz = torch.cos(z)
-    sinz = torch.sin(z)
+#     cosz = torch.cos(z)
+#     sinz = torch.sin(z)
 
-    zeros = z.detach()*0
-    ones = zeros.detach()+1
-    zmat = torch.stack([cosz, -sinz, zeros,
-                        sinz,  cosz, zeros,
-                        zeros, zeros,  ones], dim=1).reshape(B, 3, 3)
+#     zeros = z.detach()*0
+#     ones = zeros.detach()+1
+#     zmat = torch.stack([cosz, -sinz, zeros,
+#                         sinz,  cosz, zeros,
+#                         zeros, zeros,  ones], dim=1).reshape(B, 3, 3)
 
-    cosy = torch.cos(y)
-    siny = torch.sin(y)
+#     cosy = torch.cos(y)
+#     siny = torch.sin(y)
 
-    ymat = torch.stack([cosy, zeros,  siny,
-                        zeros,  ones, zeros,
-                        -siny, zeros,  cosy], dim=1).reshape(B, 3, 3)
+#     ymat = torch.stack([cosy, zeros,  siny,
+#                         zeros,  ones, zeros,
+#                         -siny, zeros,  cosy], dim=1).reshape(B, 3, 3)
 
-    cosx = torch.cos(x)
-    sinx = torch.sin(x)
+#     cosx = torch.cos(x)
+#     sinx = torch.sin(x)
 
-    xmat = torch.stack([ones, zeros, zeros,
-                        zeros,  cosx, -sinx,
-                        zeros,  sinx,  cosx], dim=1).reshape(B, 3, 3)
+#     xmat = torch.stack([ones, zeros, zeros,
+#                         zeros,  cosx, -sinx,
+#                         zeros,  sinx,  cosx], dim=1).reshape(B, 3, 3)
 
-    rotMat = xmat @ ymat @ zmat
-    return rotMat
+#     rotMat = xmat @ ymat @ zmat
+#     return rotMat
 
 
 # In[ ]:
@@ -139,84 +197,175 @@ def axis_angle_to_rotation_matrix(axis,angle):
     return RotMat
 
 
+# In[11]:
+
+
+#Original-Rewritten
+def pose_vec2mat(vec,format):
+    
+    batch_size = list(vec.shape())
+    translation = vec[:, :3]
+    translation =  torch.unsqueeze(-1)
+    
+    if format == 'euler':
+        rx = vec[:, 3:4]
+        ry = vec[:, 4:5]
+        rz = vec[:, 5:6]
+        rot_mat = euler2mat(rz, ry, rx)
+        rot_mat = torch.squeeze(1)
+        
+    elif format == 'angleaxis':
+        axis = vec[:, 3:]
+        angle = torch.unsqueeze(torch.norm(axis, axis=1), -1)
+        axis = axis/angle
+        angle = torch.unsqueeze(-1)
+        rot_mat = axis_angle_to_rotation_matrix(axis, angle)
+        
+    filler = torch.tensor([0,0,0,1]).reshape(1,1,4)
+    filler = torch.repeat_interleave(filler, repeats = batch_size, dim=0)
+    transform_mat = torch.cat([rot_mat, translation], axis = 2)
+    transform_mat = torch.cat([transform_mat, filler], axis =1)
+    
+    return transform_mat
+        
+
+
 # In[3]:
 
 
-#Modify according to axis_angle_to_rotation_matrix -Probably need changing
-def pose_vec2mat(vec, format):
-    """
-    Convert 6DoF parameters to transformation matrix.
-    Args:s
-        vec: 6DoF parameters in the order of tx, ty, tz, rx, ry, rz -- [B, 6]
-    Returns:
-        A transformation matrix -- [B, 3, 4]
-    """
-    translation = vec[:, :3].unsqueeze(-1)  # [B, 3, 1]
-    rot = vec[:,3:]
-#     filler=torch.tensor([[0, 0, 0, 1]]).type(dtype)
-    if format == 'euler':
-        rot_mat = euler2mat(rot)  # [B, 3, 3]
+# #Modify according to axis_angle_to_rotation_matrix -Probably need changing
+# def pose_vec2mat(vec, format):
+#     """
+#     Convert 6DoF parameters to transformation matrix.
+#     Args:s
+#         vec: 6DoF parameters in the order of tx, ty, tz, rx, ry, rz -- [B, 6]
+#     Returns:
+#         A transformation matrix -- [B, 3, 4]
+#     """
+#     translation = vec[:, :3].unsqueeze(-1)  # [B, 3, 1]
+#     rot = vec[:,3:]
+# #     filler=torch.tensor([[0, 0, 0, 1]]).type(dtype)
+#     if format == 'euler':
+#         rot_mat = euler2mat(rot)  # [B, 3, 3]
     
-    elif format == 'angleaxis':
-        angle=torch.expand_dims(torch.norm(rot, dim=1),-1)
-        rot_mat = axis_angle_to_rotation_matrix(rot,angle)  # [B, 3, 3]
-    transform_mat = torch.cat([rot_mat, translation], dim=2)  # [B, 3, 4]
-    return transform_mat
+#     elif format == 'angleaxis':
+#         angle=torch.expand_dims(torch.norm(rot, dim=1),-1)
+#         rot_mat = axis_angle_to_rotation_matrix(rot,angle)  # [B, 3, 3]
+#     transform_mat = torch.cat([rot_mat, translation], dim=2)  # [B, 3, 4]
+#     return transform_mat
+
+
+# In[14]:
+
+
+##Original-Rewritten
+def pixel2cam(depth, pixel_coords, intrinsics, is_homogeneous=True):
+    """Transforms coordinates in the pixel frame to the camera frame.
+
+        Args:
+        depth: [batch, height, width]
+        pixel_coords: homogeneous pixel coordinates [batch, 3, height, width]
+        intrinsics: camera intrinsics [batch, 3, 3]
+        is_homogeneous: return in homogeneous coordinates
+        Returns:
+        Coords in the camera frame [batch, 3 (4 if homogeneous), height, width]
+    """
+    
+    batch, height, width = list(depth.shape)
+    depth = depth.reshape(batch, 1, -1)
+    pixel_coords = pixel_coords.reshape(batch, 3, -1)
+    cam_coords = torch.mul(torch.inverse(intrinsics), pixel_coords) * depth
+    
+    if is_homogeneous:
+        ones = torch.ones(batch,1, height*width)
+        cam_coords = torch.cat((cam_coords, ones),1)
+    cam_coords = torch.reshape(batch, -1, height, width)
+    
+    return cam_coords
+    
 
 
 # In[8]:
 
 
-#SFM Learner-Needs changing
-def pixel2cam(depth, pixel_coords,intrinsics_inv):
-    global pixel_coords
-    """Transform coordinates in the pixel frame to the camera frame.
-    Args:
-        depth: depth maps -- [B, H, W]
-        intrinsics_inv: intrinsics_inv matrix for each element of batch -- [B, 3, 3]
-        is_homogeneous: return homogeneous coordinates
-    Returns:
-        array of (u,v,1) cam coordinates -- [B, 3, H, W]
+# #SFM Learner-Needs changing
+# def pixel2cam(depth, pixel_coords,intrinsics_inv):
+#     global pixel_coords
+#     """Transform coordinates in the pixel frame to the camera frame.
+#     Args:
+#         depth: depth maps -- [B, H, W]
+#         intrinsics_inv: intrinsics_inv matrix for each element of batch -- [B, 3, 3]
+#         is_homogeneous: return homogeneous coordinates
+#     Returns:
+#         array of (u,v,1) cam coordinates -- [B, 3, H, W]
+#     """
+#     b, h, w = depth.size()
+#     if (pixel_coords is None) or pixel_coords.size(2) < h:
+#         set_id_grid(depth)
+#     current_pixel_coords = pixel_coords[:,:,:h,:w].expand(b,3,h,w).reshape(b, 3, -1)  # [B, 3, H*W]
+#     cam_coords = (intrinsics_inv @ current_pixel_coords).reshape(b, 3, h, w)
+#     return cam_coords * depth.unsqueeze(1)
+
+
+# In[2]:
+
+
+def cam2pixel(cam_coords, proj):
+    """Transforms coordinates in a camera frame to the pixel frame.
+
+        Args:
+        cam_coords: [batch, 4, height, width]
+        proj: [batch, 4, 4]
+        Returns:
+        Pixel coordinates projected from the camera frame [batch, height, width, 2]
     """
-    b, h, w = depth.size()
-    if (pixel_coords is None) or pixel_coords.size(2) < h:
-        set_id_grid(depth)
-    current_pixel_coords = pixel_coords[:,:,:h,:w].expand(b,3,h,w).reshape(b, 3, -1)  # [B, 3, H*W]
-    cam_coords = (intrinsics_inv @ current_pixel_coords).reshape(b, 3, h, w)
-    return cam_coords * depth.unsqueeze(1)
+    batch, _, height, width = list(cam_coords.shape)
+    unnormalized_pixel_coords = torch.mul(proj, cam_coords)
+    x_u = unnormalized_pixel_coords[0:-1, 0:1, 0:-1]
+    y_u = unnormalized_pixel_coords[0:-1, 1:1, 0:-1]
+    z_u = unnormalized_pixel_coords[0:-1, 2:1, 0:-1]
+    x_n = x_u/(z_u + 1e-10)
+    y_n = y_u/(z_u + 1e-10)
+    pixel_coords = torch.cat((x_n, y_n), 1)
+    pixel_coords = pixel_coords.reshape(batch, 2, height, width)
+    z_u = z_u.reshape(batch, height, width, 1)
+    
+    return pixel_coords.permute(0,2,3,1), z_u
+
+    
 
 
 # In[1]:
 
 
-#SFM Learner-Needs changing
-def cam2pixel(cam_coords, proj_c2p_rot, proj_c2p_tr):
-    """Transform coordinates in the camera frame to the pixel frame.
-    Args:
-        cam_coords: pixel coordinates defined in the first camera coordinates system -- [B, 4, H, W]
-        proj_c2p_rot: rotation matrix of cameras -- [B, 3, 4]
-        proj_c2p_tr: translation vectors of cameras -- [B, 3, 1]
-    Returns:
-        array of [-1,1] coordinates -- [B, 2, H, W]
-    """
-    b, _, h, w = cam_coords.size()
-    cam_coords_flat = cam_coords.reshape(b, 3, -1)  # [B, 3, H*W]
-    if proj_c2p_rot is not None:
-        pcoords = proj_c2p_rot @ cam_coords_flat
-    else:
-        pcoords = cam_coords_flat
+# #SFM Learner-Needs changing
+# def cam2pixel(cam_coords, proj_c2p_rot, proj_c2p_tr):
+#     """Transform coordinates in the camera frame to the pixel frame.
+#     Args:
+#         cam_coords: pixel coordinates defined in the first camera coordinates system -- [B, 4, H, W]
+#         proj_c2p_rot: rotation matrix of cameras -- [B, 3, 4]
+#         proj_c2p_tr: translation vectors of cameras -- [B, 3, 1]
+#     Returns:
+#         array of [-1,1] coordinates -- [B, 2, H, W]
+#     """
+#     b, _, h, w = cam_coords.size()
+#     cam_coords_flat = cam_coords.reshape(b, 3, -1)  # [B, 3, H*W]
+#     if proj_c2p_rot is not None:
+#         pcoords = proj_c2p_rot @ cam_coords_flat
+#     else:
+#         pcoords = cam_coords_flat
 
-    if proj_c2p_tr is not None:
-        pcoords = pcoords + proj_c2p_tr  # [B, 3, H*W]
-    X = pcoords[:, 0]
-    Y = pcoords[:, 1]
-    Z = pcoords[:, 2].clamp(min=1e-3)
+#     if proj_c2p_tr is not None:
+#         pcoords = pcoords + proj_c2p_tr  # [B, 3, H*W]
+#     X = pcoords[:, 0]
+#     Y = pcoords[:, 1]
+#     Z = pcoords[:, 2].clamp(min=1e-3)
 
-    X_norm = 2*(X / Z)/(w-1) - 1  # Normalized, -1 if on extreme left, 1 if on extreme right (x = w-1) [B, H*W]
-    Y_norm = 2*(Y / Z)/(h-1) - 1  # Idem [B, H*W]
+#     X_norm = 2*(X / Z)/(w-1) - 1  # Normalized, -1 if on extreme left, 1 if on extreme right (x = w-1) [B, H*W]
+#     Y_norm = 2*(Y / Z)/(h-1) - 1  # Idem [B, H*W]
 
-    pixel_coords = torch.stack([X_norm, Y_norm], dim=2)  # [B, H*W, 2]
-    return pixel_coords.reshape(b,2,h,w)
+#     pixel_coords = torch.stack([X_norm, Y_norm], dim=2)  # [B, H*W, 2]
+#     return pixel_coords.reshape(b,2,h,w)
 
 
 # In[2]:
