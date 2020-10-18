@@ -13,7 +13,6 @@ Activation=nn.Tanh
 
 # In[3]:
 
-
 class ConvRNNCell(nn.Module):
     #Abstract Object Representing a Convolutional RNN Cell
     

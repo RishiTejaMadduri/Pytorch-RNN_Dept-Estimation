@@ -30,19 +30,17 @@ def main(args):
     os.makedirs(outputdir)
 #Not Needed      threads=args.threads
     
-#     with open('kitti_train.txt','r') as f:
-#         sequences=f.read().splitlines()
-
-    
+    with open('kitti_train.txt','r') as f:
+        sequences=f.read().splitlines()
+  
     lists=[]
     
-#     for i, seq_name in enumerate(sequences):
-#         print(seq_name)
-    seq_name='2011_09_26_drive_0001_sync'
-    outfile = os.path.join(outputdir, 'cam3_'+ seq_name + ".pkl")
-    lists.append((outfile, kitti_path,depth_path, seq_name))
+    for i, seq_name in enumerate(sequences):
+        print(seq_name)
+        outfile = os.path.join(outputdir, 'cam3_'+ seq_name + ".pkl")
+        lists.append((outfile, kitti_path,depth_path, seq_name))
 
-    created_groups=create_samples_from_sequence_kitti(outfile, kitti_path, depth_path, seq_name)
+        created_groups=create_samples_from_sequence_kitti(outfile, kitti_path, depth_path, seq_name)
         
     print('created : ', created_groups)
     
