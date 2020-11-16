@@ -3,22 +3,24 @@
 Pytorch based implementation of the paper: https://arxiv.org/abs/1904.07087
 By: Rui Wang, Stephen M. Pizer, Jan-Michael Frahm
 
+
+# Architecture
+<p align='center'>
+<img src='imgs/lstma.png'>
+</p>
+
+
 ## Note:
 ```
- This work is still in progress. Will be updated very soon.
+Repo under active development. Will be updated very soon
 ```
 
 ## Code Developed on:
 ```
  Python 3.7
- Pytorch 1.4
- Cuda 10.2
+ PyTorch 1.4
+ CUDA 10.2
  Ubuntu 18.04 
-```
-
-## Requirements:
-```
- pip install -r requirements.txt
 ```
 
 ## Data Pre-Processing:
@@ -29,7 +31,7 @@ By: Rui Wang, Stephen M. Pizer, Jan-Michael Frahm
 ## TODO
 
 ```
- [ ] Clean Up the code
+ [ ] Fix broken code and clean it up
  [ ] Add validation code
  [ ] Train the model
  [ ] Upload results
