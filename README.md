@@ -6,7 +6,7 @@ By: Rui Wang, Stephen M. Pizer, Jan-Michael Frahm
 
 # Architecture
 <p align='center'>
-<img src='imgs/lstma.png'>
+<img src='imgs/lstma.jpg'>
 </p>
 
 
